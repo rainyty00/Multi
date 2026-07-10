@@ -1,0 +1,24 @@
+# ===== 密钥（绝不能上传）=====
+.env
+
+# ===== 大模型文件（太大，README 说明如何获取）=====
+models/
+
+# ===== 运行时数据与产物 =====
+data/
+outputs/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===== 临时脚本 =====
+test.py

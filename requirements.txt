@@ -1,0 +1,40 @@
+# ============================================================
+# 多模态广告创意拆解 Agent —— 依赖清单
+# 安装：pip install -r requirements.txt
+# 环境：Python 3.12（conda 环境 Multi）
+# ============================================================
+
+# --- LangGraph 核心（多 Agent 编排 + 断点恢复）---
+langgraph==1.2.6
+langgraph-checkpoint-sqlite==3.1.0
+langchain-core==1.4.8
+
+# --- 基础 ---
+python-dotenv==1.2.2          # 读取 .env 密钥
+pydantic==2.13.4              # 结构化数据模型
+httpx==0.28.1                # 给 Gemini 客户端单独配代理用
+
+# --- 大模型接口（Gemini / DeepSeek / Qwen-VL 均走 OpenAI 兼容接口）---
+openai==2.43.0
+
+# --- 采集下载 ---
+yt-dlp==2026.7.4
+imageio-ffmpeg==0.6.0         # 自带 ffmpeg 二进制（下载/抽帧/分音轨）
+
+# --- 预处理：镜头切分 / 抽帧 ---
+opencv-python==5.0.0.93
+scenedetect==0.7
+
+# --- 音频：本地语音识别 + 中文关键词 ---
+faster-whisper==1.2.1
+jieba==0.42.1
+
+# --- OCR：本地画面文字识别 ---
+rapidocr-onnxruntime==1.4.4
+
+# --- Web 界面 ---
+gradio==6.20.0
+
+# --- （可选）声纹分离 v2：从 ModelScope 下载 FunASR 模型 ---
+# 实际运行 FunASR 还需 torch，未接入时可不装
+modelscope==1.38.1
