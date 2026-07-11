@@ -57,8 +57,6 @@
 ## 环境要求
 
 - Python 3.12（conda 环境）
-- 建议 4 核 8G 以上（whisper/OCR 跑在 CPU）
-- Gemini 需能访问 Google（代理）；DeepSeek/Qwen 国内直连
 
 ## 安装
 
@@ -111,9 +109,9 @@ src/
   agents/            采集/全局总览/音频/OCR/视觉/合成/评估/说话人/报告
   nodes/             预处理/时序对齐/导出
   tools/             知识库(SQLite)
-models/              本地模型（whisper / FunASR，不入库）
-data/                运行数据（上传/作业目录/checkpoints/库，不入库）
-outputs/             成品（不入库）
+models/              本地模型（whisper / FunASR）
+data/                运行数据（上传/作业目录/checkpoints/）
+outputs/             成品
 ```
 
 ## 技术栈
