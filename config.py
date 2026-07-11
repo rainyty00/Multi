@@ -25,11 +25,11 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ---------- 模型配置 ----------
-# 视觉理解模型：OpenAI gpt-4o-mini（OpenAI 官方接口）
+# 视觉理解模型（全局总览 / 逐镜精读）：Gemini 2.5 Flash（走 OpenAI 兼容接口）
 VISION_MODEL = "gemini-2.5-flash"
 VISION_API_KEY = os.getenv("GEMINI_API_KEY")
 VISION_BASE_URL = os.getenv("GEMINI_BASE_URL")
-# ★OpenAI 在国外，需走代理。默认复用系统 HTTP_PROXY；只有视觉这一路用它，
+# ★Gemini 在国外，需走代理。默认复用系统 HTTP_PROXY；只有视觉这一路用它，
 #   国内的 DashScope/DeepSeek 仍走直连。可在 .env 里用 VISION_PROXY 单独指定。
 VISION_PROXY = os.getenv("VISION_PROXY") or os.getenv("HTTP_PROXY") or None
 
