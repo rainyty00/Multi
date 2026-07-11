@@ -15,11 +15,12 @@
 import os
 import base64
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from openai import OpenAI
 
 from src.state import GraphState, StoryboardRow
-from config import EVAL_MODEL, EVAL_API_KEY, EVAL_BASE_URL
+from config import EVAL_MODEL, EVAL_API_KEY, EVAL_BASE_URL, VL_CONCURRENCY
 
 _client = OpenAI(api_key=EVAL_API_KEY, base_url=EVAL_BASE_URL)
 
@@ -108,13 +109,31 @@ def evaluate_row(row: StoryboardRow) -> dict:
 # ---------- 节点主函数 ----------
 def evaluate_node(state: GraphState) -> dict:
     storyboard: list[StoryboardRow] = state["storyboard"]
-    print(f"[评估 Agent] 用 {EVAL_MODEL} 核对 {len(storyboard)} 行分镜...")
+    print(f"[评估 Agent] 用 {EVAL_MODEL} 核对 {len(storyboard)} 行分镜"
+          f"（并发 {VL_CONCURRENCY}）...")
+
+    # ★逐镜并发：每镜是"分镜文字 ↔ 原始帧"的独立核对，互不依赖，可安全并行。
+    #   线程池限流，结果按镜号归位。
+    results: dict[int, dict] = {}
+    with ThreadPoolExecutor(max_workers=VL_CONCURRENCY) as pool:
+        future_to_row = {pool.submit(evaluate_row, r): r for r in storyboard}
+        for future in as_completed(future_to_row):
+            row = future_to_row[future]
+            try:
+                results[row.index] = future.result()
+            except Exception as e:      # 单镜评估失败给中性分，不阻断流程
+                print(f"    ⚠️ 镜{row.index} 评估失败：{e}")
+                results[row.index] = {
+                    "index": row.index, "evidence_ok": True,
+                    "visual_consistency": 3, "camera_accuracy": 3, "text_alignment": 3,
+                    "avg": 3.0, "reason": f"评估失败({e})，给中性分",
+                }
 
     per_shot = []
     failed_shots = []
     feedback = {}
-    for row in storyboard:
-        r = evaluate_row(row)
+    for idx in sorted(results):         # 按镜号顺序汇总/打印
+        r = results[idx]
         per_shot.append(r)
         # 判定：证据完整 且 平均分达标 才通过
         ok = r["evidence_ok"] and r["avg"] >= PASS_SCORE

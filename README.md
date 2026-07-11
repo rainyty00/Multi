@@ -10,7 +10,7 @@
 - **作品概览**：自动识别广告产品/品牌、主题、主要人物、场景、核心卖点、目标受众
 - **分析报告**：镜头统计、语速/关键词、画面风格、创意套路、图文匹配评分
 - **素材文件**：各镜头关键帧、完整台词（含说话人推测）、视频内全部文字
-- **多种导出**：终端/网页 Markdown 表格、CSV、打包 zip；SQLite 知识库入库、历史查看
+- **多种导出**：终端/网页 Markdown 表格、CSV、打包 zip；SQLite 知识库入库、历史查看、7 天 TTL
 - **Web 界面**：gradio，上传视频 → 实时逐节点进度 → 结果展示 → 下载
 
 ---
@@ -20,7 +20,7 @@
 | 亮点 | 说明 |
 |---|---|
 | **LangGraph 多 Agent** | 状态图编排 10+ 个 Agent/节点，条件路由 + 反馈循环 |
-| **三支线异步并发** | 音频 ∥ OCR ∥ 视觉 fan-out/fan-in，互不等待 |
+| **双层异步并发** | ① 支线间：音频 ∥ OCR ∥ 视觉 fan-out/fan-in；② 支线内：逐镜多模态调用限流线程池并发 |
 | **评估 + 定向回退** | Qwen-VL 逐镜多维打分，不合格只重写失败镜（≤2 次）后降级出稿 |
 | **模型隔离** | 生成用 Gemini、评估用 Qwen-VL，避免自评偏差 |
 | **断点恢复** | SqliteSaver 持久化，崩溃后从上个成功节点续跑，不重跑耗时步骤 |
@@ -69,7 +69,6 @@ conda activate Multi
 pip install -r requirements.txt
 
 # 3. 下载本地语音模型（faster-whisper small，约 460M）
-#    首次运行会自动下载；国内建议先设镜像 HF_ENDPOINT=https://hf-mirror.com
 
 # 4. 配置密钥：复制模板并填入你的 key
 cp .env.example .env
@@ -110,7 +109,7 @@ src/
   nodes/             预处理/时序对齐/导出
   tools/             知识库(SQLite)
 models/              本地模型（whisper / FunASR）
-data/                运行数据（上传/作业目录/checkpoints/）
+data/                运行数据（上传/作业目录/checkpoints/库）
 outputs/             成品
 ```
 
@@ -122,6 +121,5 @@ LangGraph · LangChain · gradio · faster-whisper · RapidOCR · scenedetect ·
 
 - 镜头切分偶尔漏极短/柔和转场片段
 - 每镜取 1 张代表帧，长镜头内细节可能漏（下一步：自适应多帧）
-- VL 调用串行导致偏慢（下一步：限流并发）
 - 说话人为 LLM 推测（下一步：接 FunASR 声纹分离交叉验证）
 - 平台下载受反爬限制，目前主用本地上传

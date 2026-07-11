@@ -59,6 +59,11 @@ ASR_MODEL = str(BASE_DIR / "models" / "small")
 # ---------- 可调参数 ----------
 MAX_RETRY = 2               # 分镜评估不合格时，最多重写几次
 
+# ★逐镜多模态调用的并发数（视觉精读 / 评估质检）
+#   逐镜分析彼此独立（上下文来自"略读"的角色清单，不依赖上一镜），所以可以安全并发。
+#   ★必须限流：无脑全开会撞 API 每分钟请求上限(429)。撞限流就把这个值调小。
+VL_CONCURRENCY = 5
+
 # 断点恢复：每步状态快照存这里，单独放一个文件夹便于管理
 CHECKPOINT_DIR = DATA_DIR / "checkpoints"
 CHECKPOINT_DIR.mkdir(exist_ok=True)

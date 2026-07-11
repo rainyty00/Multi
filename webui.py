@@ -290,7 +290,7 @@ def build_ui():
 
                     # 右栏：顶部保存提示 → 成品内容 → 关键帧 → 下载
                     with gr.Column(scale=11, min_width=320):
-                        gr.HTML("<div id='ttl-banner'>⏳ 历史成品请及时下载！</div>")
+                        gr.HTML("<div id='ttl-banner'>⏳ 历史成品仅保留7天, 请及时下载！</div>")
                         hist_md = gr.Markdown("### 分析结果", elem_classes="card")
                         hist_gallery = gr.Gallery(label="🖼️ 关键帧", columns=5, height=280)
                         hist_zip = gr.File(label="⬇️ 下载（zip）")

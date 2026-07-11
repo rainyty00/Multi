@@ -14,12 +14,14 @@
 """
 import base64
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
 from openai import OpenAI
 
 from src.state import GraphState, Shot
-from config import VISION_MODEL, VISION_API_KEY, VISION_BASE_URL, VISION_PROXY
+from config import (VISION_MODEL, VISION_API_KEY, VISION_BASE_URL,
+                    VISION_PROXY, VL_CONCURRENCY)
 
 
 # ★给 Gemini 客户端单独配代理（只有这一路走代理，国内接口不受影响）
@@ -116,12 +118,27 @@ def visual_node(state: GraphState) -> dict:
     chars = overview.get("characters", [])
     roster_text = "；".join(f"{c.get('label','')}={c.get('desc','')}" for c in chars)
     print(f"[视觉 Agent] 开始逐镜精读 {len(shots)} 个镜头"
-          f"{'（带角色清单）' if roster_text else ''}（调用 {VISION_MODEL}）...")
+          f"{'（带角色清单）' if roster_text else ''}"
+          f"（{VISION_MODEL}，并发 {VL_CONCURRENCY}）...")
 
+    # ★逐镜并发：每镜的上下文都来自同一份"角色清单"、互不依赖，所以能安全并行。
+    #   用线程池限流（VL_CONCURRENCY），避免无脑并发撞 API 限流(429)。
+    #   ★结果按【镜号】归位到字典，不依赖返回顺序（谁先回来先收谁）。
     visual_result: dict[int, dict] = {}
-    for shot in shots:
-        info = analyze_shot(shot, roster_text)
-        visual_result[shot.index] = info
-        print(f"    镜{shot.index}: [{info.get('style','')}] {info.get('visual','')[:40]}...")
+    with ThreadPoolExecutor(max_workers=VL_CONCURRENCY) as pool:
+        future_to_shot = {pool.submit(analyze_shot, s, roster_text): s for s in shots}
+        for future in as_completed(future_to_shot):
+            shot = future_to_shot[future]
+            try:
+                info = future.result()
+            except Exception as e:      # 单镜失败不拖垮整条支线
+                print(f"    ⚠️ 镜{shot.index} 分析失败：{e}")
+                info = {"visual": "（分析失败）", "camera": "", "style": ""}
+            visual_result[shot.index] = info
+
+    # 按镜号排序打印，便于阅读
+    for idx in sorted(visual_result):
+        info = visual_result[idx]
+        print(f"    镜{idx}: [{info.get('style','')}] {info.get('visual','')[:40]}...")
 
     return {"visual_result": visual_result}

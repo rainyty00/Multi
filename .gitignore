@@ -23,5 +23,6 @@ Thumbs.db
 # ===== 临时脚本 =====
 test.py
 
-# ===== 演示视频：只提交压缩版 showcase/demo.mp4，78M 原片不入库 =====
+# ===== 演示视频：只提交压缩版（demo_*.mp4），原始录屏不入库 =====
 showcase/多模态agent.mp4
+showcase/多模态agent-并发.mp4
