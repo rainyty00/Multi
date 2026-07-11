@@ -22,7 +22,9 @@ from pathlib import Path
 import gradio as gr
 
 from src.graph import build_graph
-from src.tools.library import list_records
+from src.tools.library import list_records, auto_cleanup
+
+auto_cleanup()          # ★启动时自动清理超过 7 天的过期成品
 
 # 流程图只构建一次（每次分析用不同 thread_id 隔离）
 APP = build_graph()

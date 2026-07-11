@@ -15,11 +15,12 @@ import time
 import json
 import datetime
 from src.graph import build_graph
-from src.tools.library import list_records, cleanup_expired
+from src.tools.library import list_records, cleanup_expired, auto_cleanup
 from src.agents.ingest import JOBS_DIR
 
 
 def run(source: str):
+    auto_cleanup()          # ★启动时自动清理超过 7 天的过期成品
     app = build_graph()
     # ★给这次任务一个唯一编号(thread_id)，作为断点恢复的钥匙
     thread_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

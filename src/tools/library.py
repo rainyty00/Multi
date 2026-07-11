@@ -56,6 +56,19 @@ def list_records() -> list:
         ).fetchall()
 
 
+def auto_cleanup():
+    """
+    ★启动时自动清理过期成品（实现"7天后自动删除"）。
+    静默执行：有东西被清理才提示；出错也不影响主流程。
+    """
+    try:
+        removed = cleanup_expired()
+        if removed:
+            print(f"[知识库] 已自动清理 {len(removed)} 条超过 {FILE_TTL_DAYS} 天的过期成品")
+    except Exception as e:
+        print(f"[知识库] 自动清理跳过（{e}）")
+
+
 def cleanup_expired(ttl_days: int = FILE_TTL_DAYS) -> list:
     """删除超过 ttl_days 天的记录及其输出文件。返回被删的目录列表。"""
     init_db()
