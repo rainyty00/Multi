@@ -217,6 +217,8 @@ CSS = """
 #refresh-btn {width:100% !important;}
 /* 分镜表表头居中、不换行（正文仍左对齐） */
 thead th, table th {text-align:center !important; white-space:nowrap !important;}
+/* 分镜表"镜号"列（第一列正文）也居中 */
+table td:first-child {text-align:center !important;}
 footer {display:none !important;}
 /* 统一两个Tab内部行的边距、宽度 */
 [data-testid="tabitem"] .gr-row {width:100% !important; padding-inline: 12px !important;}
@@ -233,6 +235,12 @@ footer {display:none !important;}
 .radio-group {
     padding-inline: 0 !important;
 }
+#left-col {
+    flex: 0 0 300px !important; 
+}
+#right-col {
+    flex: 0 0 820px !important; 
+}
 """
 
 
@@ -248,11 +256,10 @@ def build_ui():
         )
 
         with gr.Tabs():
-            # ===== 分析标签页：左 1/3 输入区，右 2/3 结果区 =====
+            # ===== 分析标签页：左:输入区，右:结果区 =====
             with gr.Tab("🎬 分析"):
                 with gr.Row():
-                    # 左栏（占 1/3）：上传文件 → 链接 → 按钮 → 进度
-                    with gr.Column(scale=4, min_width=180):
+                    with gr.Column(scale=4, min_width=300, elem_id="left-col"):
                         gr.Markdown("#### 上传与分析")
                         video_in = gr.File(label="① 上传视频", type="filepath",
                                            file_types=[".mp4", ".mov", ".mkv", ".avi", ".webm"])
@@ -262,7 +269,7 @@ def build_ui():
                         status = gr.Markdown("### 分析进度\n等待开始…", elem_classes="card")
 
                     # 右栏（占 2/3）：元数据/报告 → 分镜表 → 关键帧 → 台词 → 下载
-                    with gr.Column(scale=11, min_width=320):
+                    with gr.Column(scale=11, min_width=820, elem_id="right-col"):
                         gr.HTML("<div id='ttl-banner'>🎬 分析结果将在下方展示，完成后可打包下载</div>")
                         meta_out = gr.Markdown("### 分析结果",elem_classes="card")
                         report_out = gr.Markdown("### 分析报告", elem_classes="card")
@@ -282,14 +289,13 @@ def build_ui():
             # ===== 历史记录标签页：左 1（点击列表+刷新），右 2（提示+内容+关键帧+下载）=====
             with gr.Tab("📚 历史记录"):
                 with gr.Row():
-                    # 左栏（缩窄为原来的 4/5）：过往成品做成"点击即选"的列表 + 刷新
-                    with gr.Column(scale=4, min_width=180):
+                    with gr.Column(scale=4, min_width=300, elem_id="left-col"):
                         gr.Markdown("#### 选择过往成品")
                         hist_radio = gr.Radio(choices=history_choices(), show_label=False)
                         refresh_btn = gr.Button("🔄 刷新", elem_id="refresh-btn")
 
                     # 右栏：顶部保存提示 → 成品内容 → 关键帧 → 下载
-                    with gr.Column(scale=11, min_width=320):
+                    with gr.Column(scale=11, min_width=820, elem_id="right-col"):
                         gr.HTML("<div id='ttl-banner'>⏳ 历史成品仅保留7天, 请及时下载！</div>")
                         hist_md = gr.Markdown("### 分析结果", elem_classes="card")
                         hist_gallery = gr.Gallery(label="🖼️ 关键帧", columns=5, height=280)
@@ -303,4 +309,10 @@ def build_ui():
 
 
 if __name__ == "__main__":
-    build_ui().launch(server_name="127.0.0.1", server_port=7860, theme=THEME, css=CSS)
+    build_ui().launch(
+        server_name="127.0.0.1", 
+        server_port=7860, 
+        theme=THEME, 
+        css=CSS,
+        ssr_mode=False
+        )

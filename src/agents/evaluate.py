@@ -64,32 +64,53 @@ def evaluate_row(row: StoryboardRow) -> dict:
             "avg": 0.0, "reason": "证据不完整（缺时间段或证据帧）",
         }
 
-    # 2) 模型层：把原始帧 + 分镜文字给 qwen-vl-max 核对
+    # 2) 模型层：★双证据帧核对
+    #    长镜头里字幕常只出现两三秒，代表帧(中间时刻)未必拍得到 → 单帧核对会误判"文字不符"。
+    #    所以：代表帧核对【画面/镜头语言】，文字帧(按 OCR 时间戳抽的)核对【屏幕文字】。
+    has_text_frame = bool(row.text_frame) and os.path.exists(row.text_frame)
+
+    if has_text_frame:
+        frame_note = (
+            "下面给你【两张】该镜头的原始截图：\n"
+            "  · 图1 = 代表帧（镜头中间时刻）→ 用它核对【画面内容】和【镜头语言】\n"
+            "  · 图2 = 文字帧（该镜屏幕文字最清晰的时刻）→ 用它核对【屏幕文字】\n"
+            "★注意：图1 上没有文字是正常的（字幕只在某几秒出现），"
+            "判断屏幕文字请【只看图2】，不要因为图1没文字就扣分。\n\n"
+        )
+    else:
+        frame_note = (
+            "下面给你一张该镜头的原始截图（代表帧）。\n"
+            "★该镜头 OCR 未检测到屏幕文字，若描述里也没有文字，text_alignment 应给满分。\n\n"
+        )
+
     prompt = (
-        "你是严格的广告分镜质检员。下面给你一张广告视频的原始截图，以及一段"
-        "别人写的对这一镜的文字描述。请核对文字描述与画面是否相符，给三个维度打分"
+        "你是严格的广告分镜质检员。" + frame_note +
+        "请核对下面这段别人写的文字描述与画面是否相符，给三个维度打分"
         "（0~5，5=完全相符，0=完全不符），并说明理由。\n\n"
         f"【镜头语言描述】{row.camera}\n"
         f"【画面内容描述】{row.visual}\n"
-        f"【屏幕文字描述】{row.on_screen_text}\n\n"
+        f"【屏幕文字描述】{row.on_screen_text or '（无）'}\n\n"
         "用 JSON 返回：\n"
         '{\n'
-        '  "visual_consistency": 画面内容描述与截图是否相符(0-5),\n'
+        '  "visual_consistency": 画面内容描述与【图1】是否相符(0-5),\n'
         '  "camera_accuracy": 镜头语言(景别/角度)判断是否准确(0-5),\n'
-        '  "text_alignment": 屏幕文字描述与截图里的文字是否相符(0-5),\n'
+        '  "text_alignment": 屏幕文字描述与【图2】里的文字是否相符(0-5),\n'
         '  "reason": "一句话说明扣分点，没有就写相符"\n'
         '}\n只输出 JSON。'
     )
 
+    # 组装消息：文字 + 图1(代表帧) [+ 图2(文字帧)]
+    content = [
+        {"type": "text", "text": prompt},
+        {"type": "image_url", "image_url": {"url": image_to_data_url(row.evidence_frame)}},
+    ]
+    if has_text_frame:
+        content.append(
+            {"type": "image_url", "image_url": {"url": image_to_data_url(row.text_frame)}})
+
     resp = _client.chat.completions.create(
         model=EVAL_MODEL,
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {"url": image_to_data_url(row.evidence_frame)}},
-            ],
-        }],
+        messages=[{"role": "user", "content": content}],
         temperature=0.1,   # 评分要稳定
     )
     data = parse_json(resp.choices[0].message.content)

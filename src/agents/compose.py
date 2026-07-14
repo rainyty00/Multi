@@ -60,7 +60,10 @@ def build_prompt(aligned: list, feedback: dict | None = None) -> str:
      （例如不许输出 "T& Skittles彩虹糖"，正确的是 "Skittles彩虹糖"）；
    - 宁可少写，也不要写画面里没有的文字。
 3. **narrative 叙事作用**：一句话推断这一镜的作用（钩子/痛点/卖点/使用场景/情绪渲染/行动号召CTA）。
-4. camera 用证据里的镜头语言，visual 用画面内容（可精简，不可加新信息），voiceover 用口播（没有留空）。
+4. **camera 镜头语言：原样照搬证据里的 camera，不许精简、不许删字段**。
+   它包含【景别 + 机位角度 + 色调】三要素（如"中景，平视，色调明亮偏冷"），
+   ★三个都要保留，尤其不要把"色调"砍掉。
+5. visual 用画面内容（可精简，不可加新信息），voiceover 用口播（没有留空）。
 
 只输出一个 JSON 数组，每元素对应一个镜头，字段：
 [{{"index":镜号, "camera":"", "visual":"", "voiceover":"", "on_screen_text":"", "narrative":""}}]
@@ -79,7 +82,9 @@ def _row_from_data(row: dict, aligned: list, fallback_index: int) -> StoryboardR
         voiceover=row.get("voiceover", ""),
         on_screen_text=row.get("on_screen_text", ""),
         narrative=row.get("narrative", ""),
+        # ★双证据帧：代表帧核对画面/镜头语言，文字帧核对屏幕文字
         evidence_frame=ev.get("keyframe", ""),
+        text_frame=ev.get("text_frame", ""),
     )
 
 
