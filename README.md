@@ -25,7 +25,7 @@
 | **模型隔离** | 生成用 Gemini、评估用 Qwen-VL，避免自评偏差 |
 | **断点恢复** | SqliteSaver 持久化，崩溃后从上个成功节点续跑，不重跑耗时步骤 |
 | **全局总览"略读→精读"** | 先建角色清单再逐镜精读，保证跨镜头人物描述一致 |
-| **ReAct / CoT 双推理** | 采集用 ReAct，合成/评估用 CoT |
+
 
 ---
 
@@ -117,9 +117,4 @@ outputs/             成品
 
 LangGraph · LangChain · gradio · faster-whisper · RapidOCR · scenedetect · OpenAI SDK（Gemini/DeepSeek/Qwen-VL 兼容接口）· SQLite
 
-## 已知局限
 
-- 镜头切分偶尔漏极短/柔和转场片段
-- 每镜取 1 张代表帧，长镜头内细节可能漏（下一步：自适应多帧）
-- 说话人为 LLM 推测（下一步：接 FunASR 声纹分离交叉验证）
-- 平台下载受反爬限制，目前主用本地上传

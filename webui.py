@@ -99,12 +99,26 @@ def format_report_md(report: dict) -> str:
         ov_md +
         "### 分析报告\n"
         f"- 镜头统计：{stats.get('count',0)} 个，平均 {stats.get('avg_duration',0)}s\n"
-        f"- 音频：语速 {audio.get('speech_rate',0)} {audio.get('rate_unit','字/分')}，"
         f"关键词 {'、'.join(audio.get('keywords',[])) or '（无口播）'}\n"
         f"- 画面风格：{report.get('style_summary','')}\n"
         f"- 创意套路：{report.get('creative_summary','')}\n"
         f"- 图文匹配评分：{report.get('image_text_score',0)} / 5\n"
-        f"- 分析耗时：{report.get('elapsed_sec',0)} 秒"
+        f"- 分析耗时：{report.get('elapsed_sec',0)} 秒\n"
+        + _format_diagnosis(report.get("diagnosis", {}))
+    )
+
+
+def _format_diagnosis(diag: dict) -> str:
+    """爆点诊断：从'描述广告'升级为'分析广告为什么这么设计'。"""
+    if not diag:
+        return ""
+    return (
+        "\n### 🔥 爆点诊断\n"
+        f"- 🎣 钩子强度：{diag.get('hook','—')}\n"
+        f"- 💰 卖点节奏：{diag.get('selling_point_timing','—')}\n"
+        f"- 📈 情绪曲线：{diag.get('emotion_curve','—')}\n"
+        f"- 📣 行动号召：{diag.get('cta','—')}\n"
+        f"- ⭐ 总评：{diag.get('overall','—')}\n"
     )
 
 

@@ -15,7 +15,7 @@ import json
 from openai import OpenAI
 
 from src.state import GraphState, StoryboardRow
-from config import TEXT_MODEL, TEXT_API_KEY, TEXT_BASE_URL
+from config import TEXT_MODEL, TEXT_API_KEY, TEXT_BASE_URL, COMPOSE_BATCH_SIZE
 
 _client = OpenAI(api_key=TEXT_API_KEY, base_url=TEXT_BASE_URL)
 
@@ -88,14 +88,37 @@ def _row_from_data(row: dict, aligned: list, fallback_index: int) -> StoryboardR
     )
 
 
-def _generate(aligned_subset: list, feedback: dict | None) -> list[dict]:
-    """调 LLM，返回若干行分镜的原始数据。"""
+def _generate_once(batch: list, feedback: dict | None) -> list[dict]:
+    """调一次 LLM，处理一批镜头。"""
     resp = _client.chat.completions.create(
         model=TEXT_MODEL,
-        messages=[{"role": "user", "content": build_prompt(aligned_subset, feedback)}],
+        messages=[{"role": "user", "content": build_prompt(batch, feedback)}],
         temperature=0.3,
     )
     return parse_json_array(resp.choices[0].message.content)
+
+
+def _generate(aligned_subset: list, feedback: dict | None) -> list[dict]:
+    """
+    生成分镜行。★镜头很多时自动分批——每批 COMPOSE_BATCH_SIZE 个，
+    避免一次性塞太多把模型上下文撑爆（导致返回截断、JSON 解析失败、空表）。
+    分批调用后把各批结果拼起来。
+    """
+    n = len(aligned_subset)
+    if n <= COMPOSE_BATCH_SIZE:
+        return _generate_once(aligned_subset, feedback)
+
+    # 分批
+    all_rows = []
+    total_batches = (n + COMPOSE_BATCH_SIZE - 1) // COMPOSE_BATCH_SIZE
+    for bi, i in enumerate(range(0, n, COMPOSE_BATCH_SIZE), start=1):
+        batch = aligned_subset[i:i + COMPOSE_BATCH_SIZE]
+        print(f"    分批合成 {bi}/{total_batches}（本批 {len(batch)} 镜）...")
+        try:
+            all_rows.extend(_generate_once(batch, feedback))
+        except Exception as e:
+            print(f"    ⚠️ 第 {bi} 批合成失败：{e}")   # 单批失败不拖垮整体
+    return all_rows
 
 
 # ---------- 节点主函数 ----------

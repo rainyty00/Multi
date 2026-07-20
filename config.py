@@ -8,15 +8,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-# 读取同目录下的 .env 文件，把里面的密钥加载到「环境变量」里
-# 之后代码用 os.getenv("XXX") 就能拿到
 load_dotenv()
 
 # ---------- 路径配置 ----------
 # BASE_DIR = 本项目根目录（config.py 所在的目录）
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"          # 存中间产物（作业目录 jobs/ 等）
-UPLOAD_DIR = DATA_DIR / "upload"      # ★用户上传的视频放这里
+UPLOAD_DIR = DATA_DIR / "upload"      # 用户上传的视频放这里
 OUTPUT_DIR = BASE_DIR / "outputs"     # 存最终导出的 Markdown / CSV / 报告
 
 # 确保这些目录存在（不存在就创建）
@@ -29,8 +27,8 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 VISION_MODEL = "gemini-2.5-flash"
 VISION_API_KEY = os.getenv("GEMINI_API_KEY")
 VISION_BASE_URL = os.getenv("GEMINI_BASE_URL")
-# ★Gemini 在国外，需走代理。默认复用系统 HTTP_PROXY；只有视觉这一路用它，
-#   国内的 DashScope/DeepSeek 仍走直连。可在 .env 里用 VISION_PROXY 单独指定。
+
+#   Gemini 需走代理。默认复用系统 HTTP_PROXY
 VISION_PROXY = os.getenv("VISION_PROXY") or os.getenv("HTTP_PROXY") or None
 
 # 文本推理模型（分镜合成 / 报告，纯文字）：DeepSeek-V3
@@ -39,7 +37,7 @@ TEXT_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 TEXT_BASE_URL = os.getenv("DEEPSEEK_BASE_URL")
 
 # 评估模型：Qwen-VL-Max（阿里 DashScope）
-# ★和生成隔离：视觉生成用 Gemini，评估用 Qwen-VL-Max —— 不同厂商，最干净
+# ★和生成隔离：视觉生成用 Gemini，评估用 Qwen-VL-Max 
 EVAL_MODEL = "qwen-vl-max"
 EVAL_API_KEY = os.getenv("DASHSCOPE_API_KEY")
 EVAL_BASE_URL = os.getenv("DASHSCOPE_BASE_URL")
@@ -59,10 +57,14 @@ ASR_MODEL = str(BASE_DIR / "models" / "small")
 # ---------- 可调参数 ----------
 MAX_RETRY = 2               # 分镜评估不合格时，最多重写几次
 
-# ★逐镜多模态调用的并发数（视觉精读 / 评估质检）
+#   逐镜多模态调用的并发数（视觉精读 / 评估质检）
 #   逐镜分析彼此独立（上下文来自"略读"的角色清单，不依赖上一镜），所以可以安全并发。
 #   ★必须限流：无脑全开会撞 API 每分钟请求上限(429)。撞限流就把这个值调小。
 VL_CONCURRENCY = 5
+
+# 分镜合成的分批大小：镜头很多时（如高帧率长视频切出上百镜），
+# 一次性塞进一个 prompt 会超模型上下文导致返回被截断。分批合成、每批 N 镜，再拼起来。
+COMPOSE_BATCH_SIZE = 20
 
 # 断点恢复：每步状态快照存这里，单独放一个文件夹便于管理
 CHECKPOINT_DIR = DATA_DIR / "checkpoints"

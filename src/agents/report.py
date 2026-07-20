@@ -74,7 +74,7 @@ def report_node(state: GraphState) -> dict:
     # 4) 作品概览 + 两段总结（LLM）：★放在最后做，此时"画面全部文字"已就绪，
     #    里面白纸黑字有品牌名（如 Skittles彩虹糖），能纠正"只看图猜错产品"的问题。
     brief = [
-        {"镜": r.index, "画面": r.visual, "口播": r.voiceover,
+        {"镜": r.index, "时间": r.time_range, "画面": r.visual, "口播": r.voiceover,
          "屏幕文字": r.on_screen_text, "叙事作用": r.narrative}
         for r in storyboard
     ]
@@ -95,8 +95,18 @@ def report_node(state: GraphState) -> dict:
         '  "selling_points": ["核心卖点1", "核心卖点2"],\n'
         '  "audience": "目标受众",\n'
         '  "style_summary": "全片画面风格总结(1~2句)",\n'
-        '  "creative_summary": "创意套路总结：叙事结构/钩子/卖点节奏(1~3句)"\n'
-        "}\n只输出 JSON。"
+        '  "creative_summary": "创意套路总结：叙事结构/钩子/卖点节奏(1~3句)",\n'
+        '  "diagnosis": {\n'
+        '    "hook": "钩子诊断：前3秒（看最前面的镜头时间）有没有抓人的悬念/冲突/痛点？强还是弱？",\n'
+        '    "selling_point_timing": "卖点节奏：产品/核心卖点在第几秒抛出（看时间）？够早还是太晚？",\n'
+        '    "emotion_curve": "情绪曲线：痛点→爽点(或问题→解决)的转折发生在第几镜/第几秒？",\n'
+        '    "cta": "行动号召(CTA)：结尾有没有明确的号召？时机和力度如何？",\n'
+        '    "overall": "一句话总评：这条广告最值得学的一个点，或最可复用的套路"\n'
+        '  }\n'
+        "}\n"
+        "★diagnosis 要基于【时间】和【叙事作用】做具体分析（如\"卖点在第10秒才出现，偏晚\"），"
+        "不要说\"钩子要强\"这种放之四海皆准的空话。看不出的维度写\"不明显\"。\n"
+        "只输出 JSON。"
     )
     resp = _client.chat.completions.create(
         model=TEXT_MODEL,
@@ -127,6 +137,7 @@ def report_node(state: GraphState) -> dict:
         "image_text_score": image_text_score,
         "style_summary": summary.get("style_summary", ""),
         "creative_summary": summary.get("creative_summary", ""),
+        "diagnosis": summary.get("diagnosis", {}),   # ★爆点诊断
         "elapsed_sec": elapsed,
     }
 

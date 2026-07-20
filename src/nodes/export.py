@@ -79,6 +79,17 @@ def build_markdown(state: GraphState) -> str:
     lines.append(f"- 图文匹配评分：{report.get('image_text_score',0)} / 5")
     lines.append(f"- 分析耗时：{report.get('elapsed_sec',0)} 秒")
     lines.append("")
+
+    # --- 爆点诊断（从"描述"到"分析"）---
+    diag = report.get("diagnosis", {})
+    if diag:
+        lines.append("## 爆点诊断\n")
+        lines.append(f"- 🎣 钩子强度：{diag.get('hook','—')}")
+        lines.append(f"- 💰 卖点节奏：{diag.get('selling_point_timing','—')}")
+        lines.append(f"- 📈 情绪曲线：{diag.get('emotion_curve','—')}")
+        lines.append(f"- 📣 行动号召：{diag.get('cta','—')}")
+        lines.append(f"- ⭐ 总评：{diag.get('overall','—')}")
+        lines.append("")
     return "\n".join(lines)
 
 
